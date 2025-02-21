@@ -34,11 +34,21 @@ This configuration is designed for **ESP32-S3 GEEK** with a **1.14" ST7789V (240
 
 1. **Install ESPHome** in **Home Assistant** if not already installed.  
 2. Copy the provided **`esp32-s3-geek.yaml`** configuration.  
-3. Create a **new device** in **ESPHome**, paste the YAML configuration, and replace **WiFi credentials**:  
-   ```yaml
+3. Create a **new device** in **ESPHome**, paste the YAML configuration, and replace **WiFi credentials**:
+  
+```yaml
    wifi:
      ssid: "YourWiFiSSID"
      password: "YourWiFiPassword"
+```
+
+or use secrets file
+```yaml
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+```
+
 ---
 
 # 🎛️ How to Use  
@@ -104,7 +114,7 @@ If you encounter issues or have suggestions, open a **GitHub Issue** or **Pull R
 ---
 
 # Configuration
-```
+```yaml
 esphome:
   name: esp32-s3-geek
   friendly_name: ESP32-S3-GEEK
