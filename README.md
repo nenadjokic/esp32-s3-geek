@@ -83,3 +83,155 @@ This project is **open-source**! Feel free to modify and improve it.
 If you encounter issues or have suggestions, open a **GitHub Issue** or **Pull Request**.  
 
 📌 **Download the latest ESPHome configuration from this repository and enhance your smart home today!** 🚀  
+
+
+# Configuration
+```
+esphome:
+  name: esp32-s3-geek
+  friendly_name: ESP32-S3-GEEK
+  platformio_options:
+    board_build.flash_mode: dio
+    board_build.f_flash: 80000000L
+    board_build.arduino.memory_type: qio_opi
+    build_flags: 
+      - "-D FORECAST_DAYS=5"
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+    version: recommended
+  flash_size: 16MB
+  variant: ESP32S3
+
+# Enable logging
+logger:
+  level: DEBUG
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "YOUR ENCRYPTION KEY"
+  on_client_connected:
+    - lambda: |-
+        id(ha_status) = "Connected";
+  on_client_disconnected:
+    - lambda: |-
+        id(ha_status) = "Disconnected";
+
+ota:
+  platform: esphome
+  password: "YOUR PASSWORD"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  on_connect:
+    - lambda: |-
+        id(wifi_status) = "Connected";
+  on_disconnect:
+    - lambda: |-
+        id(wifi_status) = "Disconnected";
+
+# Bluetooth Proxy
+bluetooth_proxy:
+  active: true
+
+# Global variables for display
+globals:
+  - id: screen_index
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: wifi_status
+    type: std::string
+    restore_value: no
+    initial_value: '"Unknown"'
+  - id: ha_status
+    type: std::string
+    restore_value: no
+    initial_value: '"Unknown"'
+  - id: ble_device_name
+    type: std::string
+    restore_value: no
+    initial_value: '"--"'
+
+# Bluetooth Tracker
+esp32_ble_tracker:
+
+binary_sensor:
+  - platform: gpio
+    pin: 
+      number: GPIO1
+      inverted: true
+    name: "Button 1"
+    id: button1
+    on_press:
+      then:
+        - lambda: |-
+            id(screen_index) = (id(screen_index) + 1) % 2;
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    id: wifi_strength
+    update_interval: 30s
+
+# SPI settings for ST7789 LCD
+spi:
+  clk_pin: GPIO12
+  mosi_pin: GPIO11
+
+# Font settings
+font:
+  - file: "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    id: font1
+    size: 24
+  - file: "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    id: font2
+    size: 18
+  - file: "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    id: font3
+    size: 14
+
+# LCD Display Configuration
+display:
+  - platform: st7789v
+    model: "TTGO_TDISPLAY_135X240"
+    cs_pin: GPIO10
+    dc_pin: GPIO8
+    reset_pin: GPIO9
+    rotation: 270
+    update_interval: 500ms
+    lambda: |-
+      it.fill(Color::BLACK);
+      if (id(screen_index) == 0) {
+        it.print(10, 20, id(font2), id(color_white), "WiFi: ");
+        it.print(90, 20, id(font2), id(wifi_status) == "Connected" ? id(color_green) : id(color_red), id(wifi_status).c_str());
+        
+        it.print(10, 60, id(font2), id(color_white), "HA: ");
+        it.print(70, 60, id(font2), id(ha_status) == "Connected" ? id(color_green) : id(color_red), id(ha_status).c_str());
+        
+        it.print(10, 100, id(font2), id(color_white), "Last BLE: ");
+        it.print(130, 100, id(font2), id(color_white), id(ble_device_name).c_str());
+      } else {
+        it.print(10, 20, id(font2), id(color_white), "WiFi Signal: ");
+        it.printf(150, 20, id(font2), id(color_white), "%d dBm", (int)id(wifi_strength).state);
+        it.print(10, 60, id(font2), id(color_white), "Press Btn to return");
+      }
+
+color:
+  - id: color_light_grey
+    hex: BBBBBB
+  - id: color_dark_grey
+    hex: 5F5F5F
+  - id: color_white
+    hex: FFFFFF
+  - id: color_red
+    hex: FF0000
+  - id: color_green
+    hex: 14FF00
+  - id: color_yellow
+    hex: FFFF00
