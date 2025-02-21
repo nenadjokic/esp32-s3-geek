@@ -23,7 +23,7 @@ logger:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "lwaqwLSj0NrA7PePqL4szFDwosCnrXN8oqvRqRIV8vQ="
+    key: "YOUR ENCRYPTION KEY"
   on_client_connected:
     - lambda: |-
         id(ha_status) = "Connected";
@@ -33,7 +33,7 @@ api:
 
 ota:
   platform: esphome
-  password: "4f73a9a0023c1c907f5734d114453985"
+  password: "YOUR PASSWORD"
 
 wifi:
   ssid: !secret wifi_ssid
