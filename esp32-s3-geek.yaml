@@ -96,7 +96,7 @@ esp32_ble_tracker:
 binary_sensor:
   - platform: gpio
     pin: 
-      number: GPIO1
+      number: GPIO0
       mode: INPUT_PULLUP
       inverted: true
     name: "Button 1"
@@ -141,8 +141,8 @@ display:
       it.print(10, 60, id(font2), id(color_white), "HA: ");
       it.print(70, 60, id(font2), id(ha_status).state == "Connected" ? id(color_green) : id(color_red), id(ha_status).state.c_str());
       
-      it.print(10, 100, id(font2), id(color_white), "Uptime: ");
-      it.print(130, 100, id(font2), id(color_white), id(uptime_tracker_sensor).state.c_str());
+      it.print(10, 100, id(font2), id(color_white), "UT: ");
+      it.print(90, 100, id(font2), id(color_white), id(uptime_tracker_sensor).state.c_str());
 
 color:
   - id: color_light_grey
