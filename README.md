@@ -75,7 +75,25 @@ This configuration is designed for **ESP32-S3 GEEK** with a **1.14" ST7789V (240
 🔹 Increase `update_interval` in the display configuration to **1.5s or 2s** for better performance.  
 🔹 If text appears cut off, adjust the **X/Y coordinates** in the lambda function.  
 
----
+# 🔑 API Encryption & OTA Password Explained  
+
+## **🔹 Home Assistant API Encryption**  
+
+The `api` section enables communication between **ESPHome** and **Home Assistant**.  
+This ensures that your ESP32-S3 GEEK can send and receive data securely.  
+```yaml
+api:
+  encryption:
+    key: "YOUR ENCRYPTION KEY"
+
+```
+## **🔹 OTA (Over-the-Air) Update Password**
+
+The ota section allows you to update your ESP device wirelessly, without connecting it via USB.
+```ota:
+  platform: esphome
+  password: "YOUR PASSWORD"
+```
 
 # 📥 Download & Contribute  
 
@@ -84,6 +102,7 @@ If you encounter issues or have suggestions, open a **GitHub Issue** or **Pull R
 
 📌 **Download the latest ESPHome configuration from this repository and enhance your smart home today!** 🚀  
 
+---
 
 # Configuration
 ```
