@@ -1,7 +1,7 @@
 # 🚀 ESP32-S3 GEEK - Bluetooth Proxy with Display for Home Assistant  
 
 Transform your **ESP32-S3 GEEK** into a powerful **Bluetooth Proxy** with a real-time display for **Home Assistant**!  
-This ESPHome configuration allows you to extend Bluetooth coverage while displaying **WiFi status, HA connection status, and BLE device detection** on the built-in **1.14" ST7789V display**.
+This ESPHome configuration allows you to extend Bluetooth coverage while displaying **WiFi status, HA connection status, and system uptime** on the built-in **1.14" ST7789V display**.
 
 ---
 
@@ -9,7 +9,7 @@ This ESPHome configuration allows you to extend Bluetooth coverage while display
 
 ✅ **Bluetooth Proxy for Home Assistant** – Extends BLE device range and forwards BLE signals.  
 ✅ **WiFi & HA Status Monitoring** – Displays **Connected/Disconnected** states with color coding.  
-✅ **Last Detected BLE Device** – Shows the most recently detected BLE device.  
+✅ **Uptime Display** – Shows how long the device has been running in a **Xd Xh Xm Xs** format.  
 ✅ **WiFi Signal Strength Display** – Allows you to monitor connection stability.  
 ✅ **Screen Switching via Button** – Toggle between different screens with a button press.  
 ✅ **Optimized Display Updates** – Reduces unnecessary updates for smoother performance.  
@@ -39,15 +39,14 @@ This configuration is designed for **ESP32-S3 GEEK** with a **1.14" ST7789V (240
    wifi:
      ssid: "YourWiFiSSID"
      password: "YourWiFiPassword"
-   
 ---
 
 # 🎛️ How to Use  
 
 ## 🖥️ On-Screen Information  
 - **WiFi:** Displays connection status (**Green = Connected, Red = Disconnected**).  
-- **HA:** Shows if Home Assistant API is connected.  
-- **Last BLE:** Displays the most recently detected BLE device.  
+- **HA:** Shows if Home Assistant API is connected.
+- **Uptime Display** – Shows how long the device has been running in a **Xd Xh Xm Xs** format.  
 - **WiFi Signal Strength:** Available on the second screen.  
 
 ## 🔘 Button Functions  
@@ -131,17 +130,17 @@ logger:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "YOUR ENCRYPTION KEY"
+    key: "lwaqwLSj0NrA7PePqL4szFDwosCnrXN8oqvRqRIV8vQ="
   on_client_connected:
     - lambda: |-
-        id(ha_status) = "Connected";
+        id(ha_status).publish_state("Connected");
   on_client_disconnected:
     - lambda: |-
-        id(ha_status) = "Disconnected";
+        id(ha_status).publish_state("Disconnected");
 
 ota:
   platform: esphome
-  password: "YOUR PASSWORD"
+  password: "4f73a9a0023c1c907f5734d114453985"
 
 wifi:
   ssid: !secret wifi_ssid
@@ -149,10 +148,10 @@ wifi:
   fast_connect: true
   on_connect:
     - lambda: |-
-        id(wifi_status) = "Connected";
+        id(wifi_status).publish_state("Connected");
   on_disconnect:
     - lambda: |-
-        id(wifi_status) = "Disconnected";
+        id(wifi_status).publish_state("Disconnected");
 
 # Bluetooth Proxy
 bluetooth_proxy:
@@ -164,18 +163,39 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
-  - id: wifi_status
-    type: std::string
-    restore_value: no
-    initial_value: '"Unknown"'
-  - id: ha_status
-    type: std::string
-    restore_value: no
-    initial_value: '"Unknown"'
-  - id: ble_device_name
-    type: std::string
-    restore_value: no
-    initial_value: '"--"'
+
+text_sensor:
+  - platform: template
+    name: "WiFi Status"
+    id: wifi_status
+    update_interval: never
+  - platform: template
+    name: "HA Status"
+    id: ha_status
+    update_interval: never
+  - platform: template
+    name: "Uptime"
+    id: uptime_tracker_sensor
+    update_interval: 10s
+    lambda: |-
+      int seconds = (int)id(uptime_sensor).state;
+      int days = seconds / 86400;
+      seconds %= 86400;
+      int hours = seconds / 3600;
+      seconds %= 3600;
+      int minutes = seconds / 60;
+      seconds %= 60;
+      return { (std::to_string(days) + "d " + std::to_string(hours) + "h " + std::to_string(minutes) + "m " + std::to_string(seconds) + "s").c_str() };
+
+sensor:
+  - platform: uptime
+    name: "Uptime Sensor"
+    id: uptime_sensor
+    update_interval: 10s
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    id: wifi_strength
+    update_interval: 30s
 
 # Bluetooth Tracker
 esp32_ble_tracker:
@@ -184,6 +204,7 @@ binary_sensor:
   - platform: gpio
     pin: 
       number: GPIO1
+      mode: INPUT_PULLUP
       inverted: true
     name: "Button 1"
     id: button1
@@ -191,12 +212,6 @@ binary_sensor:
       then:
         - lambda: |-
             id(screen_index) = (id(screen_index) + 1) % 2;
-
-sensor:
-  - platform: wifi_signal
-    name: "WiFi Signal"
-    id: wifi_strength
-    update_interval: 30s
 
 # SPI settings for ST7789 LCD
 spi:
@@ -223,23 +238,18 @@ display:
     dc_pin: GPIO8
     reset_pin: GPIO9
     rotation: 270
-    update_interval: 500ms
+    update_interval: 1s
+    data_rate: 40MHz
     lambda: |-
       it.fill(Color::BLACK);
-      if (id(screen_index) == 0) {
-        it.print(10, 20, id(font2), id(color_white), "WiFi: ");
-        it.print(90, 20, id(font2), id(wifi_status) == "Connected" ? id(color_green) : id(color_red), id(wifi_status).c_str());
-        
-        it.print(10, 60, id(font2), id(color_white), "HA: ");
-        it.print(70, 60, id(font2), id(ha_status) == "Connected" ? id(color_green) : id(color_red), id(ha_status).c_str());
-        
-        it.print(10, 100, id(font2), id(color_white), "Last BLE: ");
-        it.print(130, 100, id(font2), id(color_white), id(ble_device_name).c_str());
-      } else {
-        it.print(10, 20, id(font2), id(color_white), "WiFi Signal: ");
-        it.printf(150, 20, id(font2), id(color_white), "%d dBm", (int)id(wifi_strength).state);
-        it.print(10, 60, id(font2), id(color_white), "Press Btn to return");
-      }
+      it.print(10, 20, id(font2), id(color_white), "WiFi: ");
+      it.print(90, 20, id(font2), id(wifi_status).state == "Connected" ? id(color_green) : id(color_red), id(wifi_status).state.c_str());
+      
+      it.print(10, 60, id(font2), id(color_white), "HA: ");
+      it.print(70, 60, id(font2), id(ha_status).state == "Connected" ? id(color_green) : id(color_red), id(ha_status).state.c_str());
+      
+      it.print(10, 100, id(font2), id(color_white), "Uptime: ");
+      it.print(130, 100, id(font2), id(color_white), id(uptime_tracker_sensor).state.c_str());
 
 color:
   - id: color_light_grey
@@ -254,3 +264,4 @@ color:
     hex: 14FF00
   - id: color_yellow
     hex: FFFF00
+```
