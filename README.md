@@ -1,6 +1,6 @@
 # 🚀 ESP32-S3 GEEK - Bluetooth Proxy with Display for Home Assistant  
 
-Transform your **ESP32-S3 GEEK** into a powerful **Bluetooth Proxy** with a real-time display for **Home Assistant**!  
+Transform your **ESP32-S3 GEEK** (https://www.waveshare.com/wiki/ESP32-S3-GEEK) into a powerful **Bluetooth Proxy** with a real-time display for **Home Assistant**!  
 This ESPHome configuration allows you to extend Bluetooth coverage while displaying **WiFi status, HA connection status, and system uptime** on the built-in **1.14" ST7789V display**.
 
 ---
